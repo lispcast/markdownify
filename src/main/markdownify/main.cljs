@@ -2,6 +2,19 @@
   (:require [reagent.core :as reagent]
             ["showdown" :as showdown]))
 
+(defonce flash-message (reagent/atom nil))
+(defonce flash-timeout (reagent/atom nil))
+
+(defn flash
+  ([text]
+   (flash text 3000))
+  ([text ms]
+   (js/clearTimeout @flash-timeout)
+   (reset! flash-message text)
+   (reset! flash-timeout
+           (js/setTimeout #(reset! flash-message nil) ms))))
+
+
 (defonce showdown-converter (showdown/Converter.))
 
 (defn md->html [md]
@@ -42,14 +55,24 @@
       (-> js/document .getSelection (.addRange selected)))))
 
 (defn app []
-  [:div
+  [:div {:style {:position :relative}}
+   [:div
+    {:style {:position :absolute
+             :margin :auto
+             :left 0
+             :right 0
+             :text-align :center
+             :max-width 200
+             :padding "2em"
+             :background-color "yellow"
+             :z-index 100
+             :border-radius 10
+             :transform (if @flash-message
+                          "scaleY(1)"
+                          "scaleY(0)")
+             :transition "transform 0.2s ease-out"}}
+    @flash-message]
    [:h1 "Markdownify"]
-   (comment[:div
-            [:pre [:code
-                   (pr-str @text-state)]]
-            [:pre [:code (->md @text-state)]]
-            [:pre [:code (->html @text-state)]]
-            ])
    [:div
     {:style {:display :flex}}
     [:div
@@ -64,7 +87,9 @@
                :height "500px"
                :width "100%"}}]
      [:button
-      {:on-click #(copy-to-clipboard (->md @text-state))
+      {:on-click (fn []
+                   (copy-to-clipboard (->md @text-state))
+                   (flash "Markdown copied to clipboard"))
        :style {:background-color :green
                :padding "1em"
                :color :white
@@ -83,7 +108,9 @@
                :height "500px"
                :width "100%"}}]
      [:button
-      {:on-click #(copy-to-clipboard (->html @text-state))
+      {:on-click (fn []
+                   (copy-to-clipboard (->html @text-state))
+                   (flash "HTML copied to clipboard"))
        :style {:background-color :green
                :padding "1em"
                :color :white
