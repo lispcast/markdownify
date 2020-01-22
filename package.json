@@ -1,0 +1,8 @@
+{
+  "name": "markdownify",
+  "version": "1.0.0",
+  "scripts": {},
+  "devDependencies": {
+    "shadow-cljs": "^2.8.83"
+  }
+}
